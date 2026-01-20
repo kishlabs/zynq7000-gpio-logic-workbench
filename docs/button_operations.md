@@ -1,73 +1,120 @@
-# Push Button Operations – Hardware Verification
+# Button Operations – Hardware Demonstration
 
-This document demonstrates the behavior of each ZedBoard push button using real hardware photos.
+This document demonstrates the behavior of each push button on the ZedBoard using **real hardware photographs**.
+
+Each section shows:
+- the **initial LED state**
+- the **button pressed**
+- the **resulting LED state**
+
+This ensures the behavior is clearly observable and reproducible.
+
+---
+
+## 🔹 Initial State (Before Any Operation)
+
+After programming the FPGA:
+- The LED register is initialized to `00000000`
+- All LEDs are OFF
+
+This is the baseline state before any button interaction.
+
+![Initial State](/images/initial_state.jpg)
 
 ---
 
 ## 🔼 BTNU – Load Switch Values
 
-**Function:**  
-Loads the current slide switch pattern into the LED register.
+### Purpose
+Loads the current slide switch values into the LED register.
 
-**Result:**  
-LEDs immediately reflect the switch positions.
+### Before Pressing BTNU
+- LEDs retain their previous state
+- Switch values do **not** affect LEDs yet
 
-![BTNU Load](../images/btn_load.jpg)
+![Before Load](/images//before_load.jpg)
+
+### After Pressing BTNU
+- LED pattern matches the slide switch positions
+- Only one load occurs per press
+
+![After Load](/images/btn_load.jpg)
 
 ---
 
 ## ⬅️ BTNL – Shift Left
 
-**Function:**  
-Shifts the LED register one position to the left on each press.
+### Purpose
+Shifts the LED register one bit to the left.
 
-**Result:**  
-One-bit left shift per press, no repeated shifts while holding.
+### Behavior
+- MSB is discarded
+- LSB is filled with `0`
+- One shift per button press
 
-![BTNL Shift Left](../images/btn_shift_left.jpg)
+![Shift Left](/images/btn_shift_left.jpg)
 
 ---
 
 ## ➡️ BTNR – Shift Right
 
-**Function:**  
-Shifts the LED register one position to the right on each press.
+### Purpose
+Shifts the LED register one bit to the right.
 
-**Result:**  
-One-bit right shift per press.
+### Behavior
+- LSB is discarded
+- MSB is filled with `0`
+- One shift per button press
 
-![BTNR Shift Right](../images/btn_shift_right.jpg)
+![Shift Right](/images//btn_shift_right.jpg)
 
 ---
 
 ## 🔄 BTNC – Invert LEDs
 
-**Function:**  
-Bitwise inversion of the LED register.
+### Purpose
+Inverts all bits of the LED register.
 
-**Result:**  
-ON LEDs turn OFF, OFF LEDs turn ON.
+### Behavior
+- `1` → `0`
+- `0` → `1`
+- Operation occurs once per press
 
-![BTNC Invert](../images/btn_invert.jpg)
+![Invert](/images/btn_invert.jpg)
 
 ---
 
 ## ⏹️ BTND – Reset LEDs
 
-**Function:**  
+### Purpose
 Clears the LED register.
 
-**Result:**  
-All LEDs turn OFF.
+### Behavior
+- All LEDs turn OFF
+- System returns to known state
 
-![BTND Reset](../images/btn_reset.jpg)
+![Reset](/images/btn_reset.jpg)
 
 ---
 
-## 🧠 Notes
+## 🧠 Behavioral Guarantees
 
-- Each button press generates exactly **one pulse**
-- Mechanical bouncing does not cause repeated actions
-- Button hold does **not** repeat the operation
-- Behavior verified on real ZedBoard hardware
+This design guarantees:
 
+- ✔ Exactly **one action per button press**
+- ✔ No repeated actions while holding a button
+- ✔ No glitches due to mechanical bounce
+- ✔ Deterministic behavior even with fast presses
+
+These guarantees are achieved through:
+- synchronization
+- debounce logic
+- pulse-based control
+
+---
+
+## 📌 Notes
+
+- All images are captured from a **real ZedBoard**
+- No simulation screenshots are used here
+- This section serves as **hardware proof**, not theory
