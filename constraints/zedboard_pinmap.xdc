@@ -1,45 +1,163 @@
-## CLOCK (100 MHz)
-set_property PACKAGE_PIN Y9  [get_ports clk]
-set_property IOSTANDARD LVCMOS33 [get_ports clk]
-create_clock -period 10.000 -name sys_clk -waveform {0 5} [get_ports clk]
 
-## LEDs
-set_property PACKAGE_PIN T22 [get_ports {led[0]}]
-set_property PACKAGE_PIN T21 [get_ports {led[1]}]
-set_property PACKAGE_PIN U22 [get_ports {led[2]}]
-set_property PACKAGE_PIN U21 [get_ports {led[3]}]
-set_property PACKAGE_PIN V22 [get_ports {led[4]}]
-set_property PACKAGE_PIN W22 [get_ports {led[5]}]
-set_property PACKAGE_PIN U19 [get_ports {led[6]}]
-set_property PACKAGE_PIN U14 [get_ports {led[7]}]
+# ZedBoard LED Control using Debounced Push Buttons
 
-set_property IOSTANDARD LVCMOS33 [get_ports led[*]]
+This project demonstrates a **reliable push-button based LED controller** implemented on the **ZedBoard (Zynq-7000)** using **pure Programmable Logic (PL)**.
 
+Unlike basic LED demos, this design focuses on solving **real hardware problems** such as:
+- mechanical button bounce
+- metastability from asynchronous inputs
+- repeated triggering when a button is held
 
-## Switches
-set_property PACKAGE_PIN F22 [get_ports {sw[0]}]
-set_property PACKAGE_PIN G22 [get_ports {sw[1]}]
-set_property PACKAGE_PIN H22 [get_ports {sw[2]}]
-set_property PACKAGE_PIN F21 [get_ports {sw[3]}]
-set_property PACKAGE_PIN H19 [get_ports {sw[4]}]
-set_property PACKAGE_PIN H18 [get_ports {sw[5]}]
-set_property PACKAGE_PIN H17 [get_ports {sw[6]}]
-set_property PACKAGE_PIN M15 [get_ports {sw[7]}]
+The entire design was **simulated, synthesized, implemented, and verified on real ZedBoard hardware**.
 
-set_property IOSTANDARD LVCMOS33 [get_ports sw[*]]
+---
 
+## 🧠 Motivation
 
-## Buttons
-# BTNC
-set_property PACKAGE_PIN P16 [get_ports {btn[0]}]
-# BTNU
-set_property PACKAGE_PIN T18 [get_ports {btn[1]}]
-# BTND
-set_property PACKAGE_PIN R16 [get_ports {btn[2]}]
-# BTNL
-set_property PACKAGE_PIN N15 [get_ports {btn[3]}]
-# BTNR
-set_property PACKAGE_PIN R18 [get_ports {btn[4]}]
+Mechanical push buttons are **not clean digital signals**.
 
-set_property IOSTANDARD LVCMOS33 [get_ports btn[*]]
+When pressed:
+- they bounce between `0` and `1`
+- they are asynchronous to the FPGA clock
+- using them directly leads to **multiple unintended operations**
+
+This project answers one core question:
+
+> **How do we convert a noisy mechanical button into a single, clean hardware event?**
+
+---
+
+## 🏗️ System Overview
+
+The complete system is built as a clean pipeline:
+
+```
+
+Push Button
+↓
+2-FF Synchronizer
+↓
+Debounce Counter
+↓
+Edge (Pulse) Generator
+↓
+LED Control Logic
+
+```
+
+This separation keeps the design:
+- modular
+- reusable
+- easy to debug
+- hardware-safe
+
+*(Architecture diagrams are provided in the `architecture/` folder.)*
+
+---
+
+## 🔍 Design Philosophy
+
+### Why Synchronization?
+Push buttons are **asynchronous** to the FPGA clock.  
+A 2-flip-flop synchronizer is used to protect the logic from metastability.
+
+### Why Debouncing?
+Button bounce can cause **multiple transitions** for a single press.  
+A counter ensures the signal is stable for a fixed duration (~10 ms).
+
+### Why Pulse Generation?
+Level-based button signals cause repeated actions when held.  
+A **one-clock-wide pulse** guarantees **exactly one action per press**.
+
+---
+
+## 🎮 Button to LED Mapping (Hardware Verified)
+
+| ZedBoard Button | Operation |
+|-----------------|-----------|
+| **BTNU** | Load switch values into LEDs |
+| **BTNL** | Shift LED pattern left |
+| **BTNR** | Shift LED pattern right |
+| **BTNC** | Invert LED pattern |
+| **BTND** | Reset (clear) LEDs |
+
+Each button press generates **one and only one operation**, regardless of how long the button is held.
+
+---
+
+## 📸 Hardware Validation
+
+All functionality has been validated on a real ZedBoard.
+
+Photographs showing each button operation are available in the `hardware/` folder:
+- Load operation
+- Shift left
+- Shift right
+- Invert
+- Reset
+
+These images serve as **physical proof** of correct hardware behavior.
+
+---
+
+## 📂 Project Structure
+
+```
+
+src/
+├── button_debounce.v   # Synchronizer + debounce + pulse generator
+└── top.v               # LED register and control logic
+
+constraints/
+└── zedboard_pinmap.xdc # Official ZedBoard PL pin mapping
+
+architecture/
+└── (system & flow diagrams)
+
+hardware/
+└── (real board photos)
+
+```
+
+---
+
+## 🧪 Tested Environment
+
+- **Board**: ZedBoard
+- **SoC**: Zynq-7000 (xc7z020clg484)
+- **Clock**: 100 MHz (PL)
+- **Tool**: Vivado
+- **Design Style**: Fully synchronous, PL-only
+
+---
+
+## 🎓 Key Learnings
+
+- External inputs must always be synchronized
+- Mechanical buttons cannot be used directly
+- Debounce logic must latch state, not pulse
+- Edge detection is critical for event-based designs
+- Correct pin constraints are as important as RTL
+
+---
+
+## 🚀 Possible Extensions
+
+- Rotate LEDs instead of shift
+- Long-press detection
+- Double-click detection
+- FSM-based LED patterns
+- PS ↔ PL interaction using interrupts
+```
+
+---
+
+### ✅ What we achieved in this step
+
+* One **strong**, **visual**, **story-driven** README
+* No markdown clutter
+* Reads like a **hardware lab notebook**
+* Matches (and slightly beats) your previous repo style
+
+---
 
